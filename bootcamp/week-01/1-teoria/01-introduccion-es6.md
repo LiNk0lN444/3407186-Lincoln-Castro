@@ -193,18 +193,18 @@ function fetchData(callback) {
 
 Desde 2015, JavaScript recibe actualizaciones **anuales**:
 
-| Versión     | Año  | Características Destacadas                          |
-| ----------- | ---- | --------------------------------------------------- |
-| **ES6**     | 2015 | let/const, arrows, classes, promises, modules       |
-| **ES2016**  | 2016 | Array.includes(), exponente (**)                    |
-| **ES2017**  | 2017 | async/await, Object.entries()                       |
-| **ES2018**  | 2018 | Rest/spread para objetos, async iteration           |
-| **ES2019**  | 2019 | Array.flat(), Object.fromEntries()                  |
-| **ES2020**  | 2020 | Optional chaining (?.), Nullish coalescing (??)     |
-| **ES2021**  | 2021 | String.replaceAll(), Promise.any()                  |
-| **ES2022**  | 2022 | Top-level await, class fields privados              |
-| **ES2023**  | 2023 | Array.toSorted(), Array.findLast()                  |
-| **ES2024**  | 2024 | Array grouping, Promise.withResolvers()             |
+| Versión    | Año  | Características Destacadas                      |
+| ---------- | ---- | ----------------------------------------------- |
+| **ES6**    | 2015 | let/const, arrows, classes, promises, modules   |
+| **ES2016** | 2016 | Array.includes(), exponente (**)                |
+| **ES2017** | 2017 | async/await, Object.entries()                   |
+| **ES2018** | 2018 | Rest/spread para objetos, async iteration       |
+| **ES2019** | 2019 | Array.flat(), Object.fromEntries()              |
+| **ES2020** | 2020 | Optional chaining (?.), Nullish coalescing (??) |
+| **ES2021** | 2021 | String.replaceAll(), Promise.any()              |
+| **ES2022** | 2022 | Top-level await, class fields privados          |
+| **ES2023** | 2023 | Array.toSorted(), Array.findLast()              |
+| **ES2024** | 2024 | Array grouping, Promise.withResolvers()         |
 
 ---
 
@@ -300,8 +300,8 @@ function crearMensaje(usuario) {
   var nombre = usuario.nombre;
   var edad = usuario.edad;
   var ciudad = usuario.ciudad;
-  
-  return 'Hola, soy ' + nombre + 
+
+  return 'Hola, soy ' + nombre +
          ', tengo ' + edad + ' años' +
          ' y vivo en ' + ciudad;
 }
@@ -337,14 +337,14 @@ console.log(message);
 
 ## 🎓 Conceptos Clave
 
-| Término              | Definición                                                  |
-| -------------------- | ----------------------------------------------------------- |
-| **ECMAScript**       | Estándar que define JavaScript                              |
-| **ES6/ES2015**       | Versión que revolucionó JavaScript en 2015                  |
-| **Transpilación**    | Convertir código moderno a versiones antiguas               |
-| **Babel**            | Herramienta popular para transpilar JavaScript              |
-| **Polyfill**         | Código que añade funcionalidades faltantes en navegadores   |
-| **Compatibilidad**   | Capacidad de código de ejecutarse en diferentes entornos    |
+| Término            | Definición                                                |
+| ------------------ | --------------------------------------------------------- |
+| **ECMAScript**     | Estándar que define JavaScript                            |
+| **ES6/ES2015**     | Versión que revolucionó JavaScript en 2015                |
+| **Transpilación**  | Convertir código moderno a versiones antiguas             |
+| **Babel**          | Herramienta popular para transpilar JavaScript            |
+| **Polyfill**       | Código que añade funcionalidades faltantes en navegadores |
+| **Compatibilidad** | Capacidad de código de ejecutarse en diferentes entornos  |
 
 ---
 
