@@ -10,8 +10,8 @@
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square" alt="PRs Welcome"></a>
 </p>
 
-<p align="right">
-  <a href="README_EN.md">🇺🇸 English</a>
+<p align="center">
+  <a href="README_EN.md"><img src="https://img.shields.io/badge/🇺🇸_English-0969DA?style=for-the-badge&logoColor=white" alt="English Version"></a>
 </p>
 
 ---
