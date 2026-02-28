@@ -1,0 +1,232 @@
+/* ============================================
+   PROYECTO - SISTEMA DE GESTIÓN DE BODEGAS
+   DISEÑO PROFESIONAL INDUSTRIAL
+=============================================== */
+
+/* Reset */
+body {
+  background: red !important;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: #f3f4f7;
+  color: #1d1d1d;
+  transition: 0.3s ease;
+}
+
+/* DARK MODE */
+body.dark {
+  background: #1b1c1e;
+  color: #e5e5e5;
+}
+
+/* Container principal */
+.container {
+  width: 100%;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+/* Tarjeta principal */
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: 0.3s ease;
+}
+
+body.dark .card {
+  background: #252629;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+/* Header */
+.card-header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 3px solid #2d6cdf;
+}
+
+.header-info h1 {
+  font-size: 1.7rem;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+/* Secciones */
+.card-section {
+  margin-top: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+body.dark .card-section {
+  border-bottom: 1px solid #444;
+}
+
+.card-section h2 {
+  font-size: 1.3rem;
+  color: #2d6cdf;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* Contacto */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+}
+
+.btn, .btn-small, .btn-secondary {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: #2d6cdf;
+  color: white;
+  transition: 0.3s;
+}
+
+.btn-small {
+  padding: 5px 10px;
+}
+
+.btn-secondary {
+  background: #ff8c32;
+}
+
+/* Botón hover */
+.btn:hover,
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+/* Skills */
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-item {
+  background: #edf2ff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  border-left: 4px solid #2d6cdf;
+}
+
+body.dark .skill-item {
+  background: #333a4a;
+}
+
+/* Social links */
+.social-links a {
+  display: inline-block;
+  margin-right: 15px;
+  color: #2d6cdf;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+body.dark .social-links a {
+  color: #79a8ff;
+}
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.stat-item {
+  background: #f7f7f7;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+body.dark .stat-item {
+  background: #2f3033;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Theme button */
+.theme-toggle {
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  background: #2d6cdf;
+  border: none;
+  color: white;
+  padding: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+body.dark .theme-toggle {
+  background: #ff8c32;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 30px;
+  opacity: 0.7;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 25px;
+  right: -300px;
+  background: #2d6cdf;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  transition: 0.4s;
+}
+
+.toast.show {
+  right: 25px;
+}
+
