@@ -1,311 +1,198 @@
-
-<<<<<<< HEAD
-let items = [];
-
-
-=======
-//guardar productos de bodega, objetos con su estructura
-let items = [];
-
-//para guardar datos en el navegador y que no se pierdan al recargar la página
->>>>>>> 4209ef9 (Fix:Semana 3)
-const saveItems = () => {
-  localStorage.setItem('items', JSON.stringify(items));
-};
-
-<<<<<<< HEAD
-
-=======
-//simula una base de datos convirtiendo de JSON a objeto
->>>>>>> 4209ef9 (Fix:Semana 3)
-const loadItems = () => {
-  const storedItems = localStorage.getItem('items');
-  if (storedItems) {
-    items = JSON.parse(storedItems);
-  }
-};
-
-<<<<<<< HEAD
-
-=======
-//contar el total de productos, estado activo e inactivo
->>>>>>> 4209ef9 (Fix:Semana 3)
-const updateStats = () => {
-  const stats = items.reduce((acc, item) => {
-    acc.total++;
-    acc[item.status]++; 
-    return acc;
-  }, { total: 0, active: 0, inactive: 0 }); 
-<<<<<<< HEAD
-
-=======
-//actualizar el DOM con las estadísticas
->>>>>>> 4209ef9 (Fix:Semana 3)
-  document.getElementById('stat-total').textContent = stats.total;
-  document.getElementById('stat-active').textContent = stats.active;
-  document.getElementById('stat-inactive').textContent = stats.inactive;
-
-<<<<<<< HEAD
-=======
-  // cuenta cuantos productos hay por categoria
->>>>>>> 4209ef9 (Fix:Semana 3)
-  const categoryStats = items.reduce((acc, item) => {
-    acc[item.category] = (acc[item.category] || 0) + 1;
-    return acc;
-  }, {});
-<<<<<<< HEAD
-
-=======
-  
-  //mostrar en pantalla cuantos productos hay por categoria
->>>>>>> 4209ef9 (Fix:Semana 3)
-  const statsDetails = document.getElementById('stats-details');
-  if (statsDetails) {
-    statsDetails.innerHTML = Object.entries(categoryStats)
-      .map(([category, count]) => `
-        <div class="stat-card">
-          <span class="stat-category-name">${category}</span>
-          <span class="stat-category-count">${count} items</span>
-        </div>
-      `).join('');
-  }
-
-<<<<<<< HEAD
-  
-=======
-  //mostrar cual fue el ultimo producto registrado
->>>>>>> 4209ef9 (Fix:Semana 3)
-  const lastUpdateInfo = document.getElementById('last-update-info');
-  if (lastUpdateInfo) {
-    if (items.length > 0) {
-      lastUpdateInfo.innerHTML = `📦 Última entrada registrada: <strong>${items.at(-1).name}</strong>`;
-    } else {
-      lastUpdateInfo.textContent = "Bodega vacía";
+// --- 1. CLASES BASE (POO) ---
+class BaseEntity {
+    #id;
+    constructor(id = crypto.randomUUID()) {
+        if (new.target === BaseEntity) throw new Error("Clase abstracta");
+        this.#id = id;
     }
-  }
-};
+    get id() { return this.#id; }
+}
 
-<<<<<<< HEAD
+class User extends BaseEntity {
+    constructor(name, role, email, id) {
+        super(id);
+        this.name = name;
+        this.role = role;
+        this.email = email;
+    }
+}
 
-=======
-//avisa si no hay productos registrados
->>>>>>> 4209ef9 (Fix:Semana 3)
-const updateEmptyState = () => {
-  const emptyState = document.getElementById('empty-state');
-  if (items.length === 0) {
-    emptyState.style.display = 'block';
-  } else {
-    emptyState.style.display = 'none';
-  }
-};
-<<<<<<< HEAD
+class Tool extends BaseEntity {
+    #name; #status;
+    constructor(name, priority, id, status = "Disponible") {
+        super(id);
+        this.name = name;
+        this.priority = priority;
+        this.#status = status;
+    }
+    get name() { return this.#name; }
+    get status() { return this.#status; }
+    toggleStatus() {
+        this.#status = this.#status === "Disponible" ? "En Préstamo" : "Disponible";
+    }
+    getInfo() { return `${this.name} (${this.priority})`; }
+}
 
-=======
-//se encarga de la editar la informacion de un producto
->>>>>>> 4209ef9 (Fix:Semana 3)
-const editItem = (id) => {
-  const item = items.find(i => i.id === id);
-  if (!item) return;
+class ElectricTool extends Tool {
+    constructor(name, priority, voltage, id, status) {
+        super(name, priority, id, status);
+        this.voltage = voltage;
+    }
+}
 
-  document.getElementById('item-id').value = item.id;
-  document.getElementById('item-name').value = item.name;
-  document.getElementById('item-description').value = item.description;
-  document.getElementById('item-category').value = item.category;
-  document.getElementById('item-priority').value = item.priority;
+class ManualTool extends Tool {
+    constructor(name, priority, material, id, status) {
+        super(name, priority, id, status);
+        this.material = material;
+    }
+}
 
-  document.getElementById('submit-btn').textContent = 'Actualizar';
-  window.scrollTo(0, 0); 
-};
+// --- 2. SISTEMA DE BODEGA ---
+class WarehouseSystem {
+    #items = [];
+    #users = [];
+    #logs = [];
 
-<<<<<<< HEAD
+    addUser(name, role, email) {
+        const newUser = new User(name, role, email);
+        this.#users.push(newUser);
+        this.addLog("USUARIO", `Registrado: ${name}`);
+        this.save();
+    }
 
-=======
-//se encarga de mostrar los productos que ingresamos a los usuarios
->>>>>>> 4209ef9 (Fix:Semana 3)
-const renderItems = (itemsToRender) => {
-  const itemList = document.getElementById('item-list');
+    addLog(tipo, desc) {
+        this.#logs.unshift({ fecha: new Date().toLocaleString(), tipo, desc });
+        if (this.#logs.length > 15) this.#logs.pop();
+    }
 
-  itemList.innerHTML = itemsToRender
-    .map(item => `
-      <div class="item ${item.status}">
-        <div>
-          <strong>${item.name}</strong>
-          <p>${item.description || ''}</p>
-          <small>${item.category} | ${item.priority}</small>
+    addItem(type, name, prio, extra) {
+        const tool = type === 'electrica' ? new ElectricTool(name, prio, extra) : new ManualTool(name, prio, extra);
+        this.#items.push(tool);
+        this.addLog("INGRESO", `Herramienta: ${name}`);
+        this.save();
+    }
+
+    save() {
+        const data = {
+            items: this.#items.map(i => ({
+                id: i.id, name: i.name, priority: i.priority, status: i.status,
+                type: i instanceof ElectricTool ? 'elec' : 'man',
+                extra: i instanceof ElectricTool ? i.voltage : i.material
+            })),
+            users: this.#users,
+            logs: this.#logs
+        };
+        localStorage.setItem("bodega_total_data", JSON.stringify(data));
+    }
+
+    load() {
+        const data = JSON.parse(localStorage.getItem("bodega_total_data")) || { items: [], users: [], logs: [] };
+        this.#items = data.items.map(obj => obj.type === 'elec' 
+            ? new ElectricTool(obj.name, obj.priority, obj.extra, obj.id, obj.status)
+            : new ManualTool(obj.name, obj.priority, obj.extra, obj.id, obj.status));
+        this.#users = data.users.map(u => new User(u.name, u.role, u.email, u.id));
+        this.#logs = data.logs;
+    }
+
+    getStats() {
+        return {
+            total: this.#items.length,
+            prestados: this.#items.filter(i => i.status !== "Disponible").length,
+            usuarios: this.#users.length,
+            electricas: this.#items.filter(i => i instanceof ElectricTool).length
+        };
+    }
+
+    getItems() { return this.#items; }
+    getUsers() { return this.#users; }
+    getLogs() { return this.#logs; }
+}
+
+const system = new WarehouseSystem();
+
+// --- 3. LÓGICA DE INTERFAZ ---
+function renderCatalog() {
+    const list = document.getElementById("item-list");
+    if (!list) return;
+    list.innerHTML = system.getItems().map(item => `
+        <div class="item-card" onclick="changeStatus('${item.id}')">
+            <div class="item-info">
+                <strong>${item.name}</strong>
+                <small>${item instanceof ElectricTool ? '⚡ ' + item.voltage : '🛠 ' + item.material}</small>
+            </div>
+            <span class="status-badge ${item.status === 'Disponible' ? 'status-disponible' : 'status-prestamo'}">
+                ${item.status}
+            </span>
         </div>
+    `).join("");
+}
 
-        <div class="actions">
-          <button onclick="editItem(${item.id})" class="btn-edit">
-            Editar
-          </button>
-          
-          <button onclick="toggleStatus(${item.id})">
-            ${item.status === 'active' ? 'Desactivar' : 'Activar'}
-          </button>
-          
-          <button onclick="deleteItem(${item.id})" class="btn-delete">
-            Eliminar
-          </button>
-        </div>
-      </div>
-    `)
-    .join('');
-
-  updateStats();
-  updateDetailedStats(); 
-  updateEmptyState();
-};
-<<<<<<< HEAD
-=======
-//crea una lista con los objetos que se desean ver en momento usando el filter (buscador)
->>>>>>> 4209ef9 (Fix:Semana 3)
-const applyFilters = () => {
-  const statusFilter = document.getElementById('filter-status').value;
-  const categoryFilter = document.getElementById('filter-category').value;
-  const priorityFilter = document.getElementById('filter-priority').value;
-  const searchText = document.getElementById('search-input').value.toLowerCase();
-
-  const filtered = items
-    .filter(item => statusFilter === 'all' || item.status === statusFilter)
-    .filter(item => categoryFilter === 'all' || item.category === categoryFilter)
-    .filter(item => priorityFilter === 'all' || item.priority === priorityFilter)
-    .filter(item => 
-      item.name.toLowerCase().includes(searchText) || 
-      (item.description && item.description.toLowerCase().includes(searchText))
-    );
-
-  renderItems(filtered);
+window.changeStatus = (id) => {
+    const item = system.getItems().find(i => i.id === id);
+    if (item) {
+        item.toggleStatus();
+        system.addLog("ESTADO", `${item.name} ahora ${item.status}`);
+        system.save();
+        renderCatalog();
+    }
 };
 
-<<<<<<< HEAD
+window.showSection = (id, event) => {
+    document.querySelectorAll('.panel-content').forEach(p => p.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (event) event.currentTarget.classList.add('active');
 
-=======
-//sirve para actualizar la pagina o crear
->>>>>>> 4209ef9 (Fix:Semana 3)
-const handleFormSubmit = (e) => {
-  e.preventDefault();
+    if (id === 'users') renderUsers();
+    if (id === 'transactions') renderTransactions();
+    if (id === 'stats') renderStats();
+};
 
-  const id = document.getElementById('item-id').value; 
-  const name = document.getElementById('item-name').value.trim();
-  const description = document.getElementById('item-description').value.trim();
-  const category = document.getElementById('item-category').value;
-  const priority = document.getElementById('item-priority').value;
-
-  if (!name) return;
-
-  if (id) {
-    items = items.map(item => 
-      item.id === parseInt(id) 
-        ? { ...item, name, description, category, priority, updatedAt: new Date().toISOString() } 
-        : item
-    );
-  } else {
-    const newItem = {
-      id: Date.now(),
-      name,
-      description,
-      category,
-      priority,
-      status: 'active',
-      createdAt: new Date().toISOString()
+function renderUsers() {
+    const list = document.getElementById("users-list");
+    list.innerHTML = `
+        <form id="u-form" class="form-row">
+            <input id="u-n" placeholder="Nombre" required>
+            <input id="u-e" type="email" placeholder="Email" required>
+            <button type="submit">+ Añadir</button>
+        </form>
+        <div class="item-grid">${system.getUsers().map(u => `
+            <div class="item-card"><strong>${u.name}</strong><small>${u.email}</small></div>
+        `).join("")}</div>`;
+    
+    document.getElementById("u-form").onsubmit = (e) => {
+        e.preventDefault();
+        system.addUser(document.getElementById("u-n").value, "Operario", document.getElementById("u-e").value);
+        renderUsers();
     };
-    items = [...items, newItem]; 
-  }
+}
 
-  saveItems();
-  applyFilters();
-  e.target.reset();
-  document.getElementById('item-id').value = ''; 
-  document.getElementById('submit-btn').textContent = 'Crear'; 
-};
+function renderTransactions() {
+    document.getElementById("transactions-list").innerHTML = system.getLogs().map(l => `
+        <div class="log-entry"><span><b>[${l.tipo}]</b> ${l.desc}</span><small>${l.fecha}</small></div>
+    `).join("") || "Sin movimientos.";
+}
 
-<<<<<<< HEAD
+function renderStats() {
+    const s = system.getStats();
+    document.getElementById("stats-content").innerHTML = `
+        <div class="stat-grid">
+            <div class="stat-card"><h3>${s.total}</h3><p>Equipos</p></div>
+            <div class="stat-card"><h3>${s.prestados}</h3><p>Prestados</p></div>
+            <div class="stat-card"><h3>${s.usuarios}</h3><p>Personal</p></div>
+        </div>`;
+}
 
-=======
-//para eliminar productos
->>>>>>> 4209ef9 (Fix:Semana 3)
-const deleteItem = (id) => {
-  items = items.filter(item => item.id !== id);
-  saveItems();
-  applyFilters();
-};
-
-<<<<<<< HEAD
-
-=======
-//el interruptor para cambiar el estado del producto entre activo e inactivo
->>>>>>> 4209ef9 (Fix:Semana 3)
-const toggleStatus = (id) => {
-  items = items.map(item => {
-    if (item.id === id) {
-      return {
-        ...item,
-        status: item.status === 'active' ? 'inactive' : 'active'
-      };
+document.addEventListener('DOMContentLoaded', () => {
+    system.load();
+    renderCatalog();
+    const form = document.getElementById("tool-form");
+    if (form) {
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const type = document.getElementById("t-type").value;
+            system.addItem(type, document.getElementById("t-name").value, document.getElementById("t-priority").value, type === "electrica" ? "220V" : "Acero");
+            renderCatalog();
+        };
     }
-    return item;
-  });
-
-  saveItems();
-  applyFilters();
-};
-
-<<<<<<< HEAD
-
-=======
-//borrar productos inactivos de la lista
->>>>>>> 4209ef9 (Fix:Semana 3)
-const clearInactive = () => {
-  items = items.filter(item => item.status !== 'inactive');
-  saveItems();
-  applyFilters();
-};
-<<<<<<< HEAD
-
-=======
-//se encarga de escuchar las acciones que se genera el usuario cuando interactua con la pagina
->>>>>>> 4209ef9 (Fix:Semana 3)
-const attachEvents = () => {
-  document
-    .getElementById('item-form')
-    .addEventListener('submit', handleFormSubmit);
-
-  document
-    .getElementById('clear-inactive')
-    .addEventListener('click', clearInactive);
-
-  document
-    .getElementById('filter-status')
-    .addEventListener('change', applyFilters);
-
-  document
-    .getElementById('filter-category')
-    .addEventListener('change', applyFilters);
-
-  document
-    .getElementById('filter-priority') 
-    .addEventListener('change', applyFilters);
-
-  
-  document
-    .getElementById('search-input')
-    .addEventListener('input', applyFilters);
-};
-
-<<<<<<< HEAD
-
-=======
-//se encarga de las conexiones dentro de la pagina, cargar los productos guardados, escuchar las acciones del usuario y mostrar los productos
->>>>>>> 4209ef9 (Fix:Semana 3)
-const init = () => {
-  loadItems();
-  attachEvents();
-  applyFilters();
-};
-<<<<<<< HEAD
-
-init();
-=======
-// encargada de que TODO se ejecute al cargar la pagina
-init(); 
->>>>>>> 4209ef9 (Fix:Semana 3)
+});
