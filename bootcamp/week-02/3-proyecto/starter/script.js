@@ -1,198 +1,235 @@
-// --- 1. CLASES BASE (POO) ---
-class BaseEntity {
-    #id;
-    constructor(id = crypto.randomUUID()) {
-        if (new.target === BaseEntity) throw new Error("Clase abstracta");
-        this.#id = id;
-    }
-    get id() { return this.#id; }
-}
+/**
+ * ============================================================
+ * SISTEMA DE GESTIÓN DE INVENTARIO - WEEK 02
+ 
 
-class User extends BaseEntity {
-    constructor(name, role, email, id) {
-        super(id);
-        this.name = name;
-        this.role = role;
-        this.email = email;
-    }
-}
+// 1. CONFIGURACIÓN DEL ESTADO GLOBAL
+// ------------------------------------------------------------
+let items = [];
+const STORAGE_KEY = 'bodega_semana_02_data';
 
-class Tool extends BaseEntity {
-    #name; #status;
-    constructor(name, priority, id, status = "Disponible") {
-        super(id);
-        this.name = name;
-        this.priority = priority;
-        this.#status = status;
-    }
-    get name() { return this.#name; }
-    get status() { return this.#status; }
-    toggleStatus() {
-        this.#status = this.#status === "Disponible" ? "En Préstamo" : "Disponible";
-    }
-    getInfo() { return `${this.name} (${this.priority})`; }
-}
-
-class ElectricTool extends Tool {
-    constructor(name, priority, voltage, id, status) {
-        super(name, priority, id, status);
-        this.voltage = voltage;
-    }
-}
-
-class ManualTool extends Tool {
-    constructor(name, priority, material, id, status) {
-        super(name, priority, id, status);
-        this.material = material;
-    }
-}
-
-// --- 2. SISTEMA DE BODEGA ---
-class WarehouseSystem {
-    #items = [];
-    #users = [];
-    #logs = [];
-
-    addUser(name, role, email) {
-        const newUser = new User(name, role, email);
-        this.#users.push(newUser);
-        this.addLog("USUARIO", `Registrado: ${name}`);
-        this.save();
-    }
-
-    addLog(tipo, desc) {
-        this.#logs.unshift({ fecha: new Date().toLocaleString(), tipo, desc });
-        if (this.#logs.length > 15) this.#logs.pop();
-    }
-
-    addItem(type, name, prio, extra) {
-        const tool = type === 'electrica' ? new ElectricTool(name, prio, extra) : new ManualTool(name, prio, extra);
-        this.#items.push(tool);
-        this.addLog("INGRESO", `Herramienta: ${name}`);
-        this.save();
-    }
-
-    save() {
-        const data = {
-            items: this.#items.map(i => ({
-                id: i.id, name: i.name, priority: i.priority, status: i.status,
-                type: i instanceof ElectricTool ? 'elec' : 'man',
-                extra: i instanceof ElectricTool ? i.voltage : i.material
-            })),
-            users: this.#users,
-            logs: this.#logs
-        };
-        localStorage.setItem("bodega_total_data", JSON.stringify(data));
-    }
-
-    load() {
-        const data = JSON.parse(localStorage.getItem("bodega_total_data")) || { items: [], users: [], logs: [] };
-        this.#items = data.items.map(obj => obj.type === 'elec' 
-            ? new ElectricTool(obj.name, obj.priority, obj.extra, obj.id, obj.status)
-            : new ManualTool(obj.name, obj.priority, obj.extra, obj.id, obj.status));
-        this.#users = data.users.map(u => new User(u.name, u.role, u.email, u.id));
-        this.#logs = data.logs;
-    }
-
-    getStats() {
-        return {
-            total: this.#items.length,
-            prestados: this.#items.filter(i => i.status !== "Disponible").length,
-            usuarios: this.#users.length,
-            electricas: this.#items.filter(i => i instanceof ElectricTool).length
-        };
-    }
-
-    getItems() { return this.#items; }
-    getUsers() { return this.#users; }
-    getLogs() { return this.#logs; }
-}
-
-const system = new WarehouseSystem();
-
-// --- 3. LÓGICA DE INTERFAZ ---
-function renderCatalog() {
-    const list = document.getElementById("item-list");
-    if (!list) return;
-    list.innerHTML = system.getItems().map(item => `
-        <div class="item-card" onclick="changeStatus('${item.id}')">
-            <div class="item-info">
-                <strong>${item.name}</strong>
-                <small>${item instanceof ElectricTool ? '⚡ ' + item.voltage : '🛠 ' + item.material}</small>
-            </div>
-            <span class="status-badge ${item.status === 'Disponible' ? 'status-disponible' : 'status-prestamo'}">
-                ${item.status}
-            </span>
-        </div>
-    `).join("");
-}
-
-window.changeStatus = (id) => {
-    const item = system.getItems().find(i => i.id === id);
-    if (item) {
-        item.toggleStatus();
-        system.addLog("ESTADO", `${item.name} ahora ${item.status}`);
-        system.save();
-        renderCatalog();
-    }
-};
-
-window.showSection = (id, event) => {
-    document.querySelectorAll('.panel-content').forEach(p => p.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    if (event) event.currentTarget.classList.add('active');
-
-    if (id === 'users') renderUsers();
-    if (id === 'transactions') renderTransactions();
-    if (id === 'stats') renderStats();
-};
-
-function renderUsers() {
-    const list = document.getElementById("users-list");
-    list.innerHTML = `
-        <form id="u-form" class="form-row">
-            <input id="u-n" placeholder="Nombre" required>
-            <input id="u-e" type="email" placeholder="Email" required>
-            <button type="submit">+ Añadir</button>
-        </form>
-        <div class="item-grid">${system.getUsers().map(u => `
-            <div class="item-card"><strong>${u.name}</strong><small>${u.email}</small></div>
-        `).join("")}</div>`;
+/**
+ * Función principal de arranque: Carga datos y prepara la interfaz.
+ */
+const initApp = () => {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    items = savedData ? JSON.parse(savedData) : [];
     
-    document.getElementById("u-form").onsubmit = (e) => {
-        e.preventDefault();
-        system.addUser(document.getElementById("u-n").value, "Operario", document.getElementById("u-e").value);
-        renderUsers();
-    };
-}
+    // Registramos los eventos de los botones y filtros
+    setupEventListeners();
+    
+    // Dibujamos la lista por primera vez
+    applyFilters();
+};
 
-function renderTransactions() {
-    document.getElementById("transactions-list").innerHTML = system.getLogs().map(l => `
-        <div class="log-entry"><span><b>[${l.tipo}]</b> ${l.desc}</span><small>${l.fecha}</small></div>
-    `).join("") || "Sin movimientos.";
-}
+// 2. LÓGICA DE FILTRADO (EL "CEREBRO" DEL BUSCADOR)
+// ------------------------------------------------------------
+const applyFilters = () => {
+    // Capturamos todos los valores de los filtros en el HTML
+    const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+    const filterStatus = document.getElementById('filter-status')?.value || 'all';
+    const filterCategory = document.getElementById('filter-category')?.value || 'all';
+    const filterPriority = document.getElementById('filter-priority')?.value || 'all';
 
-function renderStats() {
-    const s = system.getStats();
-    document.getElementById("stats-content").innerHTML = `
-        <div class="stat-grid">
-            <div class="stat-card"><h3>${s.total}</h3><p>Equipos</p></div>
-            <div class="stat-card"><h3>${s.prestados}</h3><p>Prestados</p></div>
-            <div class="stat-card"><h3>${s.usuarios}</h3><p>Personal</p></div>
-        </div>`;
-}
+    // Filtramos el array principal basado en las 4 condiciones simultáneas
+    const filteredResults = items.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm);
+        const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
+        const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+        const matchesPriority = filterPriority === 'all' || item.priority === filterPriority;
 
-document.addEventListener('DOMContentLoaded', () => {
-    system.load();
-    renderCatalog();
-    const form = document.getElementById("tool-form");
-    if (form) {
-        form.onsubmit = (e) => {
-            e.preventDefault();
-            const type = document.getElementById("t-type").value;
-            system.addItem(type, document.getElementById("t-name").value, document.getElementById("t-priority").value, type === "electrica" ? "220V" : "Acero");
-            renderCatalog();
-        };
+        return matchesSearch && matchesStatus && matchesCategory && matchesPriority;
+    });
+
+    renderItems(filteredResults);
+};
+
+// 3. RENDERIZADO DE LA INTERFAZ (LO QUE EL USUARIO VE)
+// ------------------------------------------------------------
+const renderItems = (itemsToDisplay) => {
+    const container = document.getElementById('item-list');
+    if (!container) return;
+
+    // Limpiamos la lista actual
+    container.innerHTML = '';
+
+    // Si no hay resultados, mostramos el mensaje de "No hay elementos"
+    const emptyMsg = document.getElementById('empty-state-msg');
+    if (itemsToDisplay.length === 0) {
+        if (emptyMsg) emptyMsg.style.display = 'block';
+        updateStatistics(); // Actualizamos stats aunque esté vacío
+        return;
     }
-});
+
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    // Generamos las tarjetas dinámicamente
+    itemsToDisplay.forEach(item => {
+        const isAct = item.status === 'active';
+        
+        // Definimos los colores basados estrictamente en el estado
+        const statusColor = isAct ? '#4caf50' : '#ff5252'; // Verde si activo, Rojo si inactivo
+        const actionBtnClass = isAct ? 'btn-deactivate' : 'btn-activate';
+        const actionBtnLabel = isAct ? 'Desactivar' : 'Activar';
+
+        const card = document.createElement('div');
+        card.className = `item-card ${item.status}`;
+        
+        // Aplicamos el estilo directamente para asegurar que se vea como en tu foto
+        card.style.cssText = `
+            border-left: 8px solid ${statusColor};
+            background: #f3f5ff;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            opacity: ${isAct ? '1' : '0.8'};
+        `;
+
+        card.innerHTML = `
+            <div class="item-info">
+                <h3 style="margin:0; color:#333;">${item.name.toUpperCase()}</h3>
+                <p style="margin:5px 0; color:#666;">${item.description || 'Sin descripción'}</p>
+                <div style="font-size: 0.85rem; color: #888;">
+                    <span>📁 ${item.category}</span> | <span>⚡ ${item.priority}</span>
+                </div>
+            </div>
+            <div class="card-actions" style="display:flex; gap:10px;">
+                <button onclick="toggleStatus('${item.id}')" 
+                        style="background:${isAct ? '#7c83fd' : '#4caf50'}; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">
+                    ${actionBtnLabel}
+                </button>
+                <button onclick="deleteItem('${item.id}')" 
+                        style="background:#8e94f2; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer;">
+                    Eliminar
+                </button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    updateStatistics();
+};
+
+// 4. ESTADÍSTICAS Y CONTADORES
+// ------------------------------------------------------------
+const updateStatistics = () => {
+    // 1. Cálculos de los contadores principales
+    const total = items.length;
+    const active = items.filter(i => i.status === 'active').length;
+    const inactive = items.filter(i => i.status === 'inactive').length;
+
+    // 2. Inyectar números en los widgets de arriba (No borres esto)
+    if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = total;
+    if (document.getElementById('stat-active')) document.getElementById('stat-active').textContent = active;
+    if (document.getElementById('stat-inactive')) document.getElementById('stat-inactive').textContent = inactive;
+
+    // 3. TU NUEVO CÓDIGO (El resumen de categorías que querías)
+    const detailed = document.getElementById('detailed-stats-content');
+
+    if (detailed) {
+        if (items.length > 0) {
+            const counts = items.reduce((acc, curr) => {
+                const catName = curr.category || 'Sin Categoría';
+                acc[catName] = (acc[catName] || 0) + 1;
+                return acc;
+            }, {});
+            
+            detailed.innerHTML = Object.entries(counts)
+                .map(([cat, count]) => `
+                    <div class="stat-pill">
+                        <b>📂 ${cat}</b>
+                        <span>${count} ${count === 1 ? 'item' : 'items'}</span>
+                    </div>
+                `).join('');
+        } else {
+            detailed.innerHTML = '<p style="color:#888;">No hay datos para mostrar categorías.</p>';
+        }
+    }
+}; // <-- Aquí cierra la función principal
+
+// 5. ACCIONES (CREAR, ESTADO, ELIMINAR, LIMPIAR)
+// ------------------------------------------------------------
+
+// Cambiar estado de Activo a Inactivo
+window.toggleStatus = (id) => {
+    items = items.map(item => {
+        if (item.id === id) {
+            item.status = (item.status === 'active') ? 'inactive' : 'active';
+        }
+        return item;
+    });
+    saveAndRefresh();
+};
+
+// Eliminar un solo elemento
+window.deleteItem = (id) => {
+    if (confirm('¿Seguro que deseas eliminar este producto?')) {
+        items = items.filter(item => item.id !== id);
+        saveAndRefresh();
+    }
+};
+
+// LIMPIAR TODOS LOS INACTIVOS (La función que fallaba)
+const clearInactiveItems = () => {
+    const inactiveCount = items.filter(i => i.status === 'inactive').length;
+    
+    if (inactiveCount === 0) {
+        alert("No hay elementos inactivos para limpiar.");
+        return;
+    }
+
+    if (confirm(`Se eliminarán ${inactiveCount} elementos inactivos. ¿Proceder?`)) {
+        items = items.filter(item => item.status === 'active');
+        saveAndRefresh();
+    }
+};
+
+// Guardado común
+const saveAndRefresh = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    applyFilters();
+};
+
+// 6. MANEJO DE EVENTOS
+// ------------------------------------------------------------
+const setupEventListeners = () => {
+    // Formulario de creación
+    const form = document.getElementById('item-form');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newItem = {
+                id: crypto.randomUUID(),
+                name: document.getElementById('item-name').value,
+                description: document.getElementById('item-desc').value,
+                category: document.getElementById('item-category').value,
+                priority: document.getElementById('item-priority').value,
+                status: 'active'
+            };
+            items.push(newItem);
+            saveAndRefresh();
+            e.target.reset();
+        });
+    }
+
+    // Botón Limpiar Inactivos
+    const clearBtn = document.getElementById('clear-inactive');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearInactiveItems);
+    }
+
+    // Filtros en tiempo real
+    ['search-input', 'filter-status', 'filter-category', 'filter-priority'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', applyFilters);
+        }
+    });
+};
+
+// Arrancamos todo cuando el HTML esté listo
+document.addEventListener('DOMContentLoaded', initApp);
